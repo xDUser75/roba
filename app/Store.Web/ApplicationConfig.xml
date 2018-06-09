@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<Configuration>
+	<Organization id="50004352" name="АРМ &quot;Спецодежда ОЗСМК&quot;" armId="403">
+		<InterfaceLoadOrganization>
+      <AssemblyName>Store.Data</AssemblyName>
+      <ClassName>Store.Data.Loader.ZSMKLoader</ClassName>
+    </InterfaceLoadOrganization>
+    <InterfaceLoadInvoice>
+      <AssemblyName>Store.Data</AssemblyName>
+      <ClassName>Store.Data.NHibernateMaps.AM_SAPRepository</ClassName>
+    </InterfaceLoadInvoice>
+	</Organization>
+	<Organization id="3" name="АРМ &quot;Спецодежда ВГОК&quot;" armId="563">
+    <InterfaceLoadOrganization>
+      <AssemblyName>Store.Data</AssemblyName>
+      <ClassName>Store.Data.Loader.VGOKLoader</ClassName>
+    </InterfaceLoadOrganization>
+    <InterfaceLoadInvoice>
+      <AssemblyName>Store.Data</AssemblyName>
+      <ClassName>Store.Data.NHibernateMaps.VGOKDataRepository</ClassName>
+    </InterfaceLoadInvoice>
+  </Organization>
+  <Organization id="5" name="АРМ &quot;Спецодежда Евразруда&quot;" armId="404">
+    <InterfaceLoadOrganization>
+      <AssemblyName>Store.Data</AssemblyName>
+      <ClassName>Store.Data.Loader.EVRAZRUDALoader</ClassName>
+    </InterfaceLoadOrganization>
+    <InterfaceLoadInvoice>
+      <AssemblyName>Store.Data</AssemblyName>
+      <!-- В момент перехода на  SAP нужно переключить-->
+      <!--ClassName>Store.Data.NHibernateMaps.EVRAZRUDADataRepository</ClassName-->
+      <ClassName>Store.Data.NHibernateMaps.AM_SAPRepository</ClassName>
+    </InterfaceLoadInvoice>
+    <InterfaceLoadNomenclature>
+      <AssemblyName>Store.Data</AssemblyName>
+      <ClassName>Store.Data.Loader.SapNomenclatureLoader</ClassName>
+    </InterfaceLoadNomenclature>
+
+  </Organization>
+  <Organization id="6" name="АРМ &quot;Спецодежда Гурьевск&quot;" armId="405">
+    <InterfaceLoadOrganization>
+      <AssemblyName>Store.Data</AssemblyName>
+      <ClassName>Store.Data.Loader.GURYEVSKLoader</ClassName>
+    </InterfaceLoadOrganization>
+    <InterfaceLoadInvoice>
+      <AssemblyName>Store.Data</AssemblyName>
+      <ClassName>Store.Data.NHibernateMaps.GURYEVSKDataRepository</ClassName>
+    </InterfaceLoadInvoice>
+  </Organization>
+
+</Configuration>

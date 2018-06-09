@@ -1,0 +1,227 @@
+﻿<%@ Master  Language="C#" AutoEventWireup="true" Inherits="System.Web.Mvc.ViewMasterPage" %>
+<%@ Import Namespace="Store.Core.Account" %>
+<%@ Import Namespace="Store.Data" %>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head id="Head1" runat="server">
+    <title>Учет СИЗ и спецодежды</title>
+    <% // At bottom to facilitate other JS files to be loaded before page-by-page JS is loaded %>
+    <asp:ContentPlaceHolder ID="HeadContentPlaceHolder" runat="server">
+    </asp:ContentPlaceHolder>
+    <%= Html.Telerik().StyleSheetRegistrar()
+                    .DefaultGroup(group => group
+                        .Add("Site.css")
+                        .Add("jquery.alerts.css")
+                        .Add("telerik.common.css")
+                        .Add("telerik.vista.css"))
+    %>
+<style type="text/css">
+
+          .t-panelbar .t-group .t-group .t-group .t-link
+          {
+              padding-left: 0em;
+          }
+
+
+a:focus {
+outline: none;
+}
+a.trigger{
+	position: absolute;
+	background:url(<%: Url.Content("Content/Images/open_menu.gif")%>);
+	text-decoration: none;
+	font-size: 16px;
+	letter-spacing:-1px;
+	font-family: verdana, helvetica, arial, sans-serif;
+	color:#fff;
+    padding:1px 6px 50px 5px;
+	font-weight: bold;	
+	z-index:2;
+}
+
+a.active.trigger {
+	background:url(../Content/Images/close_menu.gif);
+	background-repeat:no-repeat;
+}
+
+a.trigger.left {
+	left: 0;
+}
+.panel {
+	color:#CCC;
+	position: absolute;
+	display: none;
+	background:  #FFF;
+	width: 300px;
+	height: auto;
+	z-index:1;
+}
+.panel.left {
+	left: 0;
+	padding: 5px 5px 5px 20px;
+}
+
+</style>
+</head>
+
+<body >
+    <a href="#" id="trigger2" style="display:none" class="columnsContainer trigger left">&nbsp;</a>
+    <div class="page">
+
+        <div id="header">
+            <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                    <td>
+                        <div id="title">
+                            <h1><%= Session[DataGlobals.ACCOUNT_KEY] != null?((User)Session[DataGlobals.ACCOUNT_KEY]).ArmInfo.Name:"" %></h1>
+                        </div>
+              
+                        <div id="logindisplay">
+                            <% Html.RenderPartial("LogOnUserControl"); %>
+                        </div> 
+            
+                        <div id="menucontainer">
+                            <%: Html.ActionLink("Главная", "Index", "Home")%>
+                            <%--: Html.ActionLink("About", "About", "Home")--%>
+                        </div>
+                    </td>
+                    <td style="width:180px">
+                        <%--
+                            if ((IEnumerable<SelectListItem>)ViewData[Store.Data.DataGlobals.REFERENCE_ENTERPRICE] != null)
+                            {
+                            Html.Telerik().DropDownList()
+                                          .Name("_EnterpriceList")
+                                          .BindTo((IEnumerable<SelectListItem>)ViewData[Store.Data.DataGlobals.REFERENCE_ENTERPRICE])
+                                          .HtmlAttributes(new { style = "width:178px" })
+                                          .ClientEvents(events => events
+                                          .OnChange("onEnterpriceListBox")
+                                          ).Render();
+                            } else {
+                            Html.Telerik().DropDownList()
+                                          .Name("_EnterpriceList")
+                                          .HtmlAttributes(new { style = "width:178px" })
+                                          .ClientEvents(events => events
+                                          .OnChange("onEnterpriceListBox")
+                                          ).Render();
+
+                            }
+                             --%>
+                   </td>
+                </tr>
+            </table>
+        </div>
+
+        <div id="mainContent">
+
+            <div class="columnsContainer">
+
+                <%--div class="leftColumn">
+                    <p>
+                        <%= Html.Image("~/Content/Images/sharp_arch.jpg") %>
+                    </p>
+                    <h2>Store Pages</h2>
+                    <ul>
+                        <!-- We cannot use Html.ActionLink within a master page to link to a controller while using areas -->
+                        <li><%= Html.ActionLinkForAreas<HomeController>(c => c.Index(), "Home") %></li>
+                    </ul>
+                </div--%>
+                <!--/leftColumn-->
+
+                <div class="rightColumn">
+                    <asp:ContentPlaceHolder ID="MainContentPlaceHolder" runat="server" />
+                </div><!--/rightColumn-->
+
+                <div class="clear">
+                </div>
+
+            </div><!--/columnsContainer-->
+
+            <%--div id="sharpArchLogo"><%= Html.Image("~/Content/Images/sharp_arch_small.gif")%></div--%>
+
+        </div><!--/mainContent-->
+
+    </div><!--/page-->
+
+
+    <!-- other content -->
+<% 
+    Html.Telerik().Window()
+        .Name("Window_alert")
+        .Title("Ошибка выполнения")
+        .Draggable(true)
+        .Resizable(resizing => resizing
+            .Enabled(true)
+            .MinHeight(250)
+            .MinWidth(250)
+            )
+        .Scrollable(true)
+        .Modal(true)
+        .Buttons(b => b.Maximize().Close())
+        .Width(800)           
+        .Height(600)
+        .Visible(false)
+        .Render();
+%>
+    <%= Html.Telerik().ScriptRegistrar().Globalization(true) %>
+<script src="../Scripts/jquery.alerts.js" type="text/javascript"></script>
+<script type="text/javascript">
+
+    function Alert(message) {
+        jAlert(message, 'Сообщение...');
+    }
+
+    function alert(message) {
+        Alert(message);
+    }
+
+    function cssConfirm(message, okText, cancelText, callback) {
+        var res = false;
+        jConfirm(message, 'Вопрос...', callback, okText, cancelText);
+        return res;
+    }
+
+</script>
+
+<script type="text/javascript">
+    function onGridErrorEvent(e) {
+        var xhr = e.XMLHttpRequest;
+        if (e.textStatus == 'error') {
+            var window = $('#Window_alert').data('tWindow');
+            window.content(xhr.responseText).center().open();
+            e.preventDefault();
+        }
+    }
+    function onEnterpriceListBox(e) {
+        var dropDownList = $("#_EnterpriceList").data("tDropDownList");
+        var curRef = document.location.href;
+        if (curRef.indexOf("_idOrg") == -1) {
+            indexParam = curRef.indexOf("?");
+            if (indexParam == -1) {
+                document.location.href = curRef + "?_idOrg=" + dropDownList.value();
+            } else {
+                document.location.href = curRef + "&_idOrg=" + dropDownList.value();
+            }
+        } else {
+            indexParam = curRef.indexOf("_idOrg");
+            var newRef = curRef.substring(0, indexParam);
+            tmpIndx = curRef.indexOf(indexParam, "&");
+            newRefEnd = "";
+            if (tmpIndx != -1) {
+                newRefEnd = selGrp.substring(tmpIndx);
+            }
+            if (newRef.substring(newRef.length - 1) == "?") {
+                newRefEnd = newRefEnd.substring(1);
+            }
+            newRef = newRef + newRefEnd;
+            if (newRef.substring(newRef.length - 1) != "?") {
+                newRef = newRef + "&";
+            }
+            document.location.href = newRef + "_idOrg=" + dropDownList.value();
+        }
+    }
+
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+D:\work\net\Store\app\Store.Core\bin\x64\Release\Store.Core.dll.config
+D:\work\net\Store\app\Store.Core\bin\x64\Release\Store.Core.dll
+D:\work\net\Store\app\Store.Core\bin\x64\Release\Store.Core.pdb
+D:\work\net\Store\app\Store.Core\bin\x64\Release\Microsoft.Practices.ServiceLocation.dll
+D:\work\net\Store\app\Store.Core\bin\x64\Release\Newtonsoft.Json.dll
+D:\work\net\Store\app\Store.Core\bin\x64\Release\NHibernate.Validator.dll
+D:\work\net\Store\app\Store.Core\bin\x64\Release\Store.Core.Account.dll
+D:\work\net\Store\app\Store.Core\bin\x64\Release\Store.Core.Account.pdb
+D:\work\net\Store\app\Store.Core\obj\x64\Release\Store.Core.csprojResolveAssemblyReference.cache
+D:\work\net\Store\app\Store.Core\obj\x64\Release\Store.Core.Properties.Resources.resources
+D:\work\net\Store\app\Store.Core\obj\x64\Release\Store.Core.csproj.GenerateResource.Cache
+D:\work\net\Store\app\Store.Core\obj\x64\Release\Store.Core.dll
+D:\work\net\Store\app\Store.Core\obj\x64\Release\Store.Core.pdb

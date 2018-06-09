@@ -1,0 +1,1405 @@
+﻿<%@ Master  Language="C#" AutoEventWireup="true" Inherits="System.Web.Mvc.ViewMasterPage" %>
+<%@ Import Namespace="Store.Core.Account" %>
+<%@ Import Namespace="Store.Data" %>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head id="Head1" runat="server">
+    <meta http-equiv="X-UA-Compatible" content="IE=7" />
+    <title>Учет СИЗ и спецодежды</title>
+    <% // At bottom to facilitate other JS files to be loaded before page-by-page JS is loaded %>
+    <script src="<%: Url.Content("~/Scripts/2011.2.712/jquery-1.5.1.min.js")%>" type="text/javascript"></script>
+    <asp:ContentPlaceHolder ID="HeadContentPlaceHolder" runat="server">
+    </asp:ContentPlaceHolder>
+    <%= Html.Telerik().StyleSheetRegistrar()
+                    .DefaultGroup(group => group
+                        .Add("Site.css")
+                        .Add("jquery.alerts.css")
+                        .Add("telerik.common.css")
+                        .Add("telerik.vista.css"))
+    %>
+
+<style type="text/css">
+
+          .t-panelbar .t-group .t-group .t-group .t-link
+          {
+              padding-left: 0em;
+          }
+
+
+a:focus {
+outline: none;
+}
+a.trigger{
+	position: absolute;
+	background:url(Content/Images/open_menu.gif);
+	text-decoration: none;
+	font-size: 16px;
+	letter-spacing:-1px;
+	font-family: verdana, helvetica, arial, sans-serif;
+	color:#fff;
+    padding:1px 6px 50px 5px;
+	font-weight: bold;	
+	z-index:2;
+}
+
+a.active.trigger {
+	background:url(Content/Images/close_menu.gif);
+	background-repeat:no-repeat;
+}
+
+a.trigger.left {
+	left: 0;
+}
+.panel {
+	color:#CCC;
+	position: absolute;
+	display: none;
+	background:  #FFF;
+	width: 300px;
+	height: auto;
+	z-index:1;
+}
+.panel.left {
+	left: 0;
+	padding: 5px 5px 5px 20px;
+}
+
+</style>
+</head>
+
+<body>
+    <a href="#" id="trigger2" style="display:none" class="columnsContainer trigger left">&nbsp;</a>
+    <div class="page">
+
+        <div id="header">
+            <table border="0" cellpadding="0" cellspacing="0" width="100%">
+                <tr>
+                    <td>
+                        <div id="title">
+                            <h1><%= Session[DataGlobals.ACCOUNT_KEY] != null?((User)Session[DataGlobals.ACCOUNT_KEY]).ArmInfo.Name:"" %></h1>
+                        </div>
+              
+                        <div id="logindisplay">
+                            <% Html.RenderPartial("LogOnUserControl"); %>
+                        </div> 
+            
+                        <!--div id="menucontainer">
+                            <%: Html.ActionLink("Главная", "Index", "Home")%>                          
+                        </div-->
+                    </td>
+                    <td style="width:180px">
+                    <%
+                    bool isDebug = bool.Parse(ConfigurationManager.AppSettings["isDebug"]);
+                    if (isDebug){
+                    %>
+                    <h2>                     
+                    <font color="red"><b>Отладочный сервер</b></font>
+                    </h2>
+                    <%
+                    }
+                    %>
+                   </td>
+                </tr>
+            </table>
+        </div>
+<!--#include file="../Shared/GetReportUrl.inc"-->
+<% Html.Telerik().Menu()
+        .Name("Menu")
+            .Items(item =>
+            {
+                item.Add()
+                   .Text("Главная")
+                   .ImageUrl(Url.Content("~/Content/Images/home.gif"))
+                   .ImageHtmlAttributes(new { alt = "Главная" })
+                   .Url(Url.Action("Index", "Home"));
+                item.Add()
+                   .Text("Работа")
+                   .ImageUrl(Url.Content("~/Content/Images/store.gif"))
+                   .ImageHtmlAttributes(new { alt = "Работа" })
+                   .Items((subItem) =>
+                   {
+                       if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_OPERATION_EDIT) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_OPERATION_VIEW))
+                       {
+                           subItem.Add()
+                                  .Text("Операции")
+                                  .ImageUrl(Url.Content("~/Content/Images/store.gif"))
+                                  .Url(Url.Action("Index", "Operations"))
+                                  .ImageHtmlAttributes(new { alt = "Операции" });
+                       }
+                       if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_WORKER_CARD_EDIT) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_WORKER_CARD_VIEW))
+                       {
+
+                           subItem.Add()
+                                  .Text("Выдача спецодежды")
+                                  .ImageUrl(Url.Content("~/Content/Images/store.gif"))
+                                  .Url(Url.Action("Index", "WorkerCards"))
+                                  .ImageHtmlAttributes(new { alt = "Выдача спецодежды" });
+                       }
+                       if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_WORKER_CARD_OUT_EDIT) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_WORKER_CARD_OUT_VIEW))
+                       {
+                           subItem.Add()
+                                  .Text("Списание спецодежды по документу")
+                                  .ImageUrl(Url.Content("~/Content/Images/store.gif"))
+                                  .Url(Url.Action("Index", "WorkerCardOuts"))
+                                  .ImageHtmlAttributes(new { alt = "Списание спецодежды по документу" });
+                       }
+                       if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+						HttpContext.Current.User.IsInRole(DataGlobals.ROLE_WORKER_CARD_RETURN_EDIT) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_WORKER_CARD_RETURN_VIEW))
+                       {
+                           subItem.Add()
+                                  .Text("Возврат спецодежды на склад")
+                                  .ImageUrl(Url.Content("~/Content/Images/store.gif"))
+                                  .Url(Url.Action("Index", "WorkerCardReturn"))
+                                  .ImageHtmlAttributes(new { alt = "Возврат спецодежды на склад" });
+                       }
+						if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_WORKER_CARD_EDIT) ||
+						HttpContext.Current.User.IsInRole(DataGlobals.ROLE_WORKER_CARD_RETURN_EDIT) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_WORKER_CARD_OUT_EDIT))
+                       {
+					   subItem.Add()
+                                  .Text("Перевод работника")
+                                  .ImageUrl(Url.Content("~/Content/Images/store.gif"))
+                                  .Url(Url.Action("Index", "WorkerCardTransfer"))
+                                  .ImageHtmlAttributes(new { alt = "Перевод работника" });
+					   }
+
+                       if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_STORAGE_EDIT) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_STORAGE_VIEW))
+                       {
+                           subItem.Add()
+                                  .Text("Остатки на складах")
+                                  .ImageUrl(Url.Content("~/Content/Images/store.gif"))
+                                  .Url(Url.Action("Index", "Storages"))
+                                  .ImageHtmlAttributes(new { alt = "Остатки на складах" });
+                       }
+                       if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_STORAGE_MONTH_EDIT) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_STORAGE_MONTH_VIEW))
+                       {
+					   subItem.Add()
+                                  .Text("Остатки по месяцам")
+                                  .ImageUrl(Url.Content("~/Content/Images/store.gif"))
+                                  .Url(Url.Action("Index", "Remains"))
+                                  .ImageHtmlAttributes(new { alt = "Остатки на складе по месяцам" });
+					  }
+                       if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_STORAGE_MOVE_OUT_EDIT) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_STORAGE_MOVE_OUT_VIEW))
+                       {
+					   subItem.Add()
+                                  .Text("Списание б/у со склада")
+                                  .ImageUrl(Url.Content("~/Content/Images/store.gif"))
+                                  .Url(Url.Action("Index", "MoveStorageOut"))
+                                  .ImageHtmlAttributes(new { alt = "Списание в утиль со склада" });
+						}
+                       if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_STORNO_VIEW) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_STORNO_EDIT))
+                       {
+					   subItem.Add()
+                                  .Text("Сторнирование операций")
+                                  .ImageUrl(Url.Content("~/Content/Images/store.gif"))
+                                  .Url(Url.Action("Index", "Storno"))
+                                  .ImageHtmlAttributes(new { alt = "Сторнирование операций" });
+
+						}
+                       if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_MOL_VIEW) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_MOL_EDIT))
+                       {					   
+                            subItem.Add()
+                                   .Text("Дежурная спецодежда")
+                                   .ImageUrl(Url.Content("~/Content/Images/store.gif"))
+                                   .Url(Url.Action("Index", "MatPersonStore"))
+                                   .ImageHtmlAttributes(new { alt = "Операции с Дежурной спецодеждой" });
+						}
+                       if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL))
+                       {
+					   subItem.Add()
+                                  .Text("Параметры")
+                                  .ImageUrl(Url.Content("~/Content/Images/store.gif"))
+                                  .Url(Url.Action("Index", "Config"))
+                                  .ImageHtmlAttributes(new { alt = "Параметры" });
+						}
+                       if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN))
+                       {
+                           subItem.Add()
+                                  .Text("Экспорт плана закупки")
+                                  .ImageUrl(Url.Content("~/Content/Images/store.gif"))
+                                  .Url(Url.Action("Index", "ExportPlan"))
+                                  .ImageHtmlAttributes(new { alt = "Экспорт плана закупки" });
+
+						}
+                   });
+                item.Add()
+                    .Text("Справочники")
+                    .ImageUrl(Url.Content("~/Content/Images/reference.gif"))
+                    .ImageHtmlAttributes(new { alt = "Справочники" })
+                    .Items((subItem) =>
+                    {
+                        if ((HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+       HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+       HttpContext.Current.User.IsInRole(DataGlobals.ROLE_NORMA_VIEW) ||
+       HttpContext.Current.User.IsInRole(DataGlobals.ROLE_NORMA_EDIT)) ||
+       HttpContext.Current.User.IsInRole(DataGlobals.ROLE_NORMA_APPROVED))
+                        {
+                            subItem.Add()
+                                   .Text("Нормы")
+                                   .ImageUrl(Url.Content("~/Content/Images/reference.gif"))
+                                   .Url(Url.Action("Index", "Normas"))
+                                   .ImageHtmlAttributes(new { alt = "Нормы" });
+                        }
+
+                        if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_WORKER_EDIT) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_WORKER_VIEW))
+                        {
+                            subItem.Add()
+                                   .Text("Сотрудники")
+                                   .ImageUrl(Url.Content("~/Content/Images/reference.gif"))
+                                   .Url(Url.Action("Index", "Workers"))
+                                   .ImageHtmlAttributes(new { alt = "Сотрудники" });
+                        }
+                       if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_MATPERSON_VIEW) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_MATPERSON_EDIT))
+                        {
+                            subItem.Add()
+                                   .Text("Справочник МОЛ")
+                                   .ImageUrl(Url.Content("~/Content/Images/reference.gif"))
+                                   .Url(Url.Action("Index", "MatPerson"))
+                                   .ImageHtmlAttributes(new { alt = "Справочник материально ответственных лиц" });
+                        }
+/*
+                        if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+           HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+           HttpContext.Current.User.IsInRole(DataGlobals.ROLE_WORKER_EDIT) ||
+           HttpContext.Current.User.IsInRole(DataGlobals.ROLE_WORKER_VIEW))
+                        {
+                            subItem.Add()
+                                   .Text("Рабочие места")
+                                   .ImageUrl(Url.Content("~/Content/Images/reference.gif")))
+                                   .Url(Url.Action("Index", "WorkerWorkplaces"))
+                                   .ImageHtmlAttributes(new { alt = "Рабочие места" });
+                        }
+                        if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+							 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+							 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_WORKER_SIZE_EDIT) ||
+							 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_WORKER_SIZE_VIEW))
+                        {
+                            subItem.Add()
+                                   .Text("Размеры работников")
+                                   .ImageUrl(Url.Content("~/Content/Images/reference.gif")))
+                                   .Url(Url.Action("Index", "WorkerSizes"))
+                                   .ImageHtmlAttributes(new { alt = "Размеры работников" });
+                        }
+*/
+						 if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+							 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+							 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ORGANIZATION_EDIT) ||
+	                         HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ORGANIZATION_VIEW))
+                        {
+                            subItem.Add()
+                                   .Text("Структура организации")
+                                   .ImageUrl(Url.Content("~/Content/Images/reference.gif"))
+                                   .Url(Url.Action("ShowTree", "Organizations"))
+                                   .ImageHtmlAttributes(new { alt = "Структура организации" });
+                        }
+                        if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+							 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+							 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_AMSAP_LOAD))
+                        {
+                            subItem.Add()
+                                   .Text("Загрузка организаций")
+                                   .ImageUrl(Url.Content("~/Content/Images/reference.gif"))
+                                   .Url(Url.Action("Index", "AM_SAPS"))
+                                   .ImageHtmlAttributes(new { alt = "Загрузка организаций" });
+                        }
+                        if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN))
+                        {
+                            subItem.Add()
+                                   .Text("Загрузка декретниц")
+                                   .ImageUrl(Url.Content("~/Content/Images/reference.gif"))
+                                   .Url(Url.Action("Index", "ChildCare"))
+                                   .ImageHtmlAttributes(new { alt = "Загрузка декретниц" });
+                        }
+
+                        if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+							 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+							 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_OPER_TYPE_EDIT) ||
+							 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_OPER_TYPE_VIEW))
+                        {
+                            subItem.Add()
+                                   .Text("Типы операций")
+                                   .ImageUrl(Url.Content("~/Content/Images/reference.gif"))
+                                   .Url(Url.Action("Index", "OperTypes"))
+                                   .ImageHtmlAttributes(new { alt = "Типы операций" });
+                        }
+                        if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+							 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+							 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_NOM_BODY_PART_EDIT) ||
+							 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_NOM_BODY_PART_VIEW))
+                        {
+                            subItem.Add()
+                                   .Text("Типы размеров")
+                                   .ImageUrl(Url.Content("~/Content/Images/reference.gif"))
+                                   .Url(Url.Action("Index", "NomBodyParts"))
+                                   .ImageHtmlAttributes(new { alt = "Типы операций" });
+                        }
+
+
+                        if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+							 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+							 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_NOMENCLATURE_EDIT) ||
+							 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_NOMENCLATURE_VIEW))
+                        {
+                            subItem.Add()
+                                   .Text("Группы номенклатур")
+                                   .ImageUrl(Url.Content("~/Content/Images/reference.gif"))
+                                   .Url(Url.Action("Index", "NomGroups"))
+                                   .ImageHtmlAttributes(new { alt = "Группы номенклатур" });
+                        }
+
+                        if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_NOMENCLATURE_EDIT) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_NOMENCLATURE_VIEW))
+                        {
+                            subItem.Add()
+                                   .Text("Номенклатуры")
+                                   .ImageUrl(Url.Content("~/Content/Images/reference.gif"))
+                                   .Url(Url.Action("Index", "Nomenclatures"))
+                                   .ImageHtmlAttributes(new { alt = "Номенклатуры" });
+                        }
+
+                       if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN))
+                        {
+                            subItem.Add()
+                                   .Text("Запуск процедур БД")
+                                   .ImageUrl(Url.Content("~/Content/Images/reference.gif"))
+                                   .Url(Url.Action("Index", "LoadData"))
+                                   .ImageHtmlAttributes(new { alt = "Запуск процедур БД" });
+                        }
+                       if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_NOM_GROUP_PRICE_VIEW) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_NOM_GROUP_PRICE_UPLOAD)
+						   )
+                        {
+                            subItem.Add()
+                                   .Text("Цены на группы номенклатур")
+                                   .ImageUrl(Url.Content("~/Content/Images/reference.gif"))
+                                   .Url(Url.Action("Index", "NomGroupPrice"))
+                                   .ImageHtmlAttributes(new { alt = "Цены на группы номенклатур" });
+                        }
+						 if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_SUBSCRIPTION_VIEW))
+                        {
+                            subItem.Add()
+                                   .Text("Подписи")
+                                   .ImageUrl(Url.Content("~/Content/Images/reference.gif"))
+                                   .Url(Url.Action("Index", "Subscription"))
+                                   .ImageHtmlAttributes(new { alt = "Подписи" });
+                        }
+						 if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_SIGNDOCUMET_VIEW) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_SIGNDOCUMET_EDIT)
+                           )
+                        {
+                            subItem.Add()
+                                   .Text("Комиссии")
+                                   .ImageUrl(Url.Content("~/Content/Images/reference.gif"))
+                                   .Url(Url.Action("Index", "SignDocumet"))
+                                   .ImageHtmlAttributes(new { alt = "Комиссии" });
+                        }
+
+
+                    });
+
+                item.Add()
+                    .Text("Отчеты")
+                    .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                    .ImageHtmlAttributes(new { alt = "Отчеты" })
+                    .Items((subItem) =>
+                    {
+                        subItem.Add()
+                            .Text("Учетные документы")
+                            .ImageUrl(Url.Content("~/Content/Images/folder.gif"))
+                            .ImageHtmlAttributes(new { alt = "Учетные документы" })
+                            //.Enabled(false)
+                            .Items(subItem1 =>
+                            {
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_REQUIREMENT) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_NORMA_WORKPLACE))
+                                {
+                                   if (HttpContext.Current.Session["_idOrg"].ToString() == DataGlobals.ORG_ID_EVRAZRUDA)
+                                    {
+                                        subItem1.Add()
+                                               .Text("Учет операций по сотрудникам")
+                                               .Url(getReportUrl("Учет операций по сотрудникам по МВЗ"))
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .ImageHtmlAttributes(new { alt = "Учет операций" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                    }
+                                    else {
+                                        subItem1.Add()
+                                               .Text("Учет операций по сотрудникам")
+                                               .Url(getReportUrl("Учет операций по сотрудникам"))
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .ImageHtmlAttributes(new { alt = "Учет операций" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                    }
+                                }
+
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                  HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_REQUIREMENT) ||
+                                  HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_NORMA_WORKPLACE))
+                                {
+                                   if (HttpContext.Current.Session["_idOrg"].ToString() == DataGlobals.ORG_ID_EVRAZRUDA)
+                                    {
+                                        subItem1.Add()
+                                               .Text("Учет операций по подразделению")
+                                               .Url(getReportUrl("Ведомость учета операций по МВЗ"))
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .ImageHtmlAttributes(new { alt = "Учет операций" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                    }
+                                    else {
+                                        subItem1.Add()
+                                               .Text("Учет операций по подразделению")
+                                               .Url(getReportUrl("Ведомость учета операций"))
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .ImageHtmlAttributes(new { alt = "Учет операций" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                    }
+                                }
+
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                    HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                    HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_CIRCULATE))
+                                {
+                                    subItem1.Add()
+                                           .Text("Оборотная ведомость")
+                                           .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                        //.Url(Url.Action("Report", new { idRep = "ReportVedomost" }))
+                                           .Url(getReportUrl("Оборотная ведомость"))
+                                           .ImageHtmlAttributes(new { alt = "Оборотная ведомость" })
+                                           .LinkHtmlAttributes(new { target = "_blank" });
+
+                                }
+
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_PERSONAL_CARD))
+                                {
+                                    subItem1.Add()
+                                           .Text("Оборотная ведомость по забалансу")
+                                           .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                           .Url(getReportUrl("Оборотная ведомость по забалансу") + "&RptUserName=" + Server.UrlEncode(((User)Session[DataGlobals.ACCOUNT_KEY]).UserInfo.FullName))
+                                           .ImageHtmlAttributes(new { alt = "Оборотная ведомость по забалансу" })
+                                           .LinkHtmlAttributes(new { target = "_blank" });
+                                    subItem1.Add()
+                                           .Text("Оборотная ведомость по забалансу по МВЗ")
+                                           .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                           .Url(getReportUrl("Оборотная ведомость по забалансу по МВЗ") + "&RptUserName=" + Server.UrlEncode(((User)Session[DataGlobals.ACCOUNT_KEY]).UserInfo.FullName))
+                                           .ImageHtmlAttributes(new { alt = "Оборотная ведомость по забалансу по МВЗ" })
+                                           .LinkHtmlAttributes(new { target = "_blank" });
+
+                                }
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_REQUIREMENT))
+                                {
+                                    subItem1.Add()
+                                           .Text("Требование-накладная M11")
+                                        //.Url(Url.Action("Report", new { idRep = "ReportM11" }))
+                                           .Url(getReportUrl("Накладная M11") + "&RptUserName=" + Server.UrlEncode(((User)Session[DataGlobals.ACCOUNT_KEY]).UserInfo.FullName))
+                                           .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                           .ImageHtmlAttributes(new { alt = "М11" })
+                                           .LinkHtmlAttributes(new { target = "_blank" });
+                                }
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_REQUIREMENT_VGOK))
+                                {
+                                    subItem1.Add()
+                                           .Text("Требование на получение СИЗ")
+                                           .Url(getReportUrl("Требование на выдачу СИЗ") + "&RptUserName=" + Server.UrlEncode(((User)Session[DataGlobals.ACCOUNT_KEY]).UserInfo.FullName))
+                                           .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                           .ImageHtmlAttributes(new { alt = "Требование на получение СИЗ" })
+                                           .LinkHtmlAttributes(new { target = "_blank" });
+                                }
+
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_REQUIREMENT))
+                                {
+                                    subItem1.Add()
+                                          .Text("Приходный ордер М-4")
+                                          .Url(getReportUrl("Приходный ордер М-4") + "&RptUserName=" + Server.UrlEncode(((User)Session[DataGlobals.ACCOUNT_KEY]).UserInfo.FullName))
+                                          .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                          .ImageHtmlAttributes(new { alt = "М-4" })
+                                          .LinkHtmlAttributes(new { target = "_blank" });
+                                }
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_REQUIREMENT))
+                                {
+                                    subItem1.Add()
+                                           .Text("Форма MБ-7")
+                                           .Url(getReportUrl("Форма MБ-7"))
+                                           .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                           .ImageHtmlAttributes(new { alt = "МБ-7" })
+                                           .LinkHtmlAttributes(new { target = "_blank" });
+                                    if (HttpContext.Current.Session["_idOrg"].ToString() == DataGlobals.ORG_ID_EVRAZRUDA)
+                                    {
+                                        subItem1.Add()
+                                               .Text("Форма MБ-7 по МВЗ")
+                                               .Url(getReportUrl("Форма MБ-7 по МВЗ"))
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .ImageHtmlAttributes(new { alt = "МБ-7 МВЗ" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                    }
+
+                                }
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_REQUIREMENT))
+                                {
+                                    subItem1.Add()
+                                           .Text("Акт расхода")
+                                           .Url(getReportUrl("Акт расхода") + "&RptParamServerName=" + Store.Core.Utils.SystemUtils.ServerUrl(HttpContext.Current.Request))
+                                           .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                           .ImageHtmlAttributes(new { alt = "Акт расхода" })
+                                           .LinkHtmlAttributes(new { target = "_blank" });
+                                }
+
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_REQUIREMENT)||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_AKTMB8))
+                                {
+                                    if (HttpContext.Current.Session["_idOrg"].ToString() == DataGlobals.ORG_ID_EVRAZRUDA)
+                                    {
+                                        subItem1.Add()
+                                               .Text("Акт на списание MБ-8 Евразруда")
+                                               .Url(getReportUrl("Акт на списание MБ-8 Евразруда"))
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .ImageHtmlAttributes(new { alt = "МБ-8" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                    }
+                                    else
+                                    {
+                                        subItem1.Add()
+                                               .Text("Акт на списание MБ-8")
+                                               .Url(getReportUrl("Акт на списание MБ-8"))
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .ImageHtmlAttributes(new { alt = "МБ-8" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                    }
+                                }
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_REQUIREMENT))
+                                {
+                                    subItem1.Add()
+                                           .Text("Перемещение по складам")
+                                           .Url(getReportUrl("Перемещение по складам"))
+                                           .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                           .ImageHtmlAttributes(new { alt = "Перемещение по складам" })
+                                           .LinkHtmlAttributes(new { target = "_blank" });
+                                }
+
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_REQUIREMENT))
+                                {
+                                    subItem1.Add()
+                                           .Text("Бирки на склад")
+                                           .Url(getReportUrl("Бирки на склад"))
+                                           .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                           .ImageHtmlAttributes(new { alt = "Бирки на склад" })
+                                           .LinkHtmlAttributes(new { target = "_blank" });
+                                }
+                                                                
+                            });
+                        if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_PERSONAL_CARD))
+                        {
+                            subItem.Add()
+                                   .Text("Личная карточка")
+                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                   .Url(getReportUrl("Личная карточка"))
+                                   .ImageHtmlAttributes(new { alt = "Карточка" })
+                                   .LinkHtmlAttributes(new { target = "_blank" });
+                        }
+						if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_PERSONAL_CARD) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_REQUIREMENT))
+                        {
+                            subItem.Add()
+                                   .Text("Спецодежда на руках")
+                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                   .Url(getReportUrl("Спецодежда на руках"))
+                                   .ImageHtmlAttributes(new { alt = "Спецодежда на руках" })
+                                   .LinkHtmlAttributes(new { target = "_blank" });
+                        }
+
+                            subItem.Add()
+                                .Text("План выдачи")
+                                .ImageUrl(Url.Content("~/Content/Images/folder.gif"))
+                                .ImageHtmlAttributes(new { alt = "План выдачи" })
+                                //.Enabled(false)
+                                .Items(subItem1 =>
+                                {
+                                    if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                       HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                       HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_PLAN_PERSONAL))
+                                    {
+                                        subItem1.Add()
+                                               .Text("План выдачи по сотрудникам")
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .Url(getReportUrl("План выдачи по сотрудникам"))
+                                               .ImageHtmlAttributes(new { alt = "План выдачи" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                    }
+                                    if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_PLAN_SHOP))
+                                    {
+                                        subItem1.Add()
+                                               .Text("План выдачи по подразделению")
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .Url(getReportUrl("План выдачи по подразделению"))
+                                               .ImageHtmlAttributes(new { alt = "План выдачи" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                        subItem1.Add()
+                                               .Text("Номенклатурный план выдачи по подразделению")
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .Url(getReportUrl("Номенклатурный план выдачи по подразделению"))
+                                               .ImageHtmlAttributes(new { alt = "План выдачи" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                        subItem1.Add()
+                                               .Text("Сводный по затратам на СИЗ")
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .Url(getReportUrl("Сводный по затратам"))
+                                               .ImageHtmlAttributes(new { alt = "Сводный отчет по затратам на СИЗ" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                    }
+                                    if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                          HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                          HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_NORMA_WORKPLACE))
+                                    {
+                                        subItem1.Add()
+                                               .Text("Лимиты на закуп по подразделению")
+                                               .Url(getReportUrl("Лимиты на закуп по подразделению"))
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .ImageHtmlAttributes(new { alt = "Лимиты на закуп по подразделению" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                    }
+                                    if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                          HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                          HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_PLAN_PERSONAL))
+                                    {
+                                        subItem1.Add()
+                                               .Text("Сотрудники, неполучившие спеодежду")
+                                               .Url(getReportUrl("Сотрудники неполучившие спеодежду"))
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .ImageHtmlAttributes(new { alt = "Сотрудники, неполучившие спеодежду по истечению срока носки" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                    }
+
+                                    if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                          HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                          HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_PLAN_SHOP))
+                                    {
+                                        if (HttpContext.Current.Session["_idOrg"].ToString() == DataGlobals.ORG_ID_EVRAZRUDA)
+                                        {
+                                        subItem1.Add()
+                                               .Text("Планирование потребности в СИЗ на отчетный период")
+                                               .Url(getReportUrl("Евразруда Планирование потребности в СИЗ на отчетный период"))
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .ImageHtmlAttributes(new { alt = "Планирование потребности в СИЗ на отчетный периоди" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                        } else {
+                                            subItem1.Add()
+                                                   .Text("Планирование потребности в СИЗ на отчетный период")
+                                                   .Url(getReportUrl("Планирование потребности в СИЗ на отчетный период"))
+                                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                                   .ImageHtmlAttributes(new { alt = "Планирование потребности в СИЗ на отчетный периоди" })
+                                                   .LinkHtmlAttributes(new { target = "_blank" });
+                                        }
+                                    }
+                                                                        					                                     
+                                });
+                        
+						 
+						if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+							HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+							HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_PLAN_SHOP))
+                        {
+                            subItem.Add()
+                                   .Text("График посещения по сотрудникам")
+                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                   .Url(getReportUrl("График посещения по сотрудникам"))
+								   .ImageHtmlAttributes(new { alt = "График" })
+                                   .LinkHtmlAttributes(new { target = "_blank" });
+                        }
+
+						if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+							HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+							HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_PLAN_SHOP))
+                        {
+                            subItem.Add()
+                                   .Text("Справка посещения складов")
+                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                   .Url(getReportUrl("Справка посещений складов"))
+								   .ImageHtmlAttributes(new { alt = "Справка посещений складов выдачи спецодежды по цехам" })
+                                   .LinkHtmlAttributes(new { target = "_blank" });
+                        }
+
+						if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+							HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+							HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_PLAN_SHOP))
+                        {
+                            subItem.Add()
+                                   .Text("Исполнение графика выдачи")
+                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                   .Url(getReportUrl("Исполнение графика выдачи"))
+								   .ImageHtmlAttributes(new { alt = "Исполнение графика выдачи" })
+                                   .LinkHtmlAttributes(new { target = "_blank" });
+                        }
+
+
+                        if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_PROPUSK))
+                        {
+                            subItem.Add()
+                                   .Text("Разовый материальный пропуск")
+                                   .Url(getReportUrl("Разовый материальный пропуск цех")+ "&RptUserName=" + Server.UrlEncode(((User)Session[DataGlobals.ACCOUNT_KEY]).UserInfo.FullName))
+                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                   .ImageHtmlAttributes(new { alt = "Разовый материальный пропуск для печати в цехе" })
+                                   .LinkHtmlAttributes(new { target = "_blank" });
+						}
+
+
+                            subItem.Add()
+                                .Text("Нормы")
+                                .ImageUrl(Url.Content("~/Content/Images/folder.gif"))
+                                .ImageHtmlAttributes(new { alt = "Нормы" })
+                                //.Enabled(false)
+                                .Items(subItem1 =>
+                                {                        
+                                    if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                           HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                           HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_NORMA_WORKPLACE))
+                                    {
+                                        subItem1.Add()
+                                               .Text("Нормы на рабочих местах")
+                                               .Url(getReportUrl("Нормы на рабочих местах"))
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .ImageHtmlAttributes(new { alt = "Нормы" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                    }
+
+                                    if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+						               HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+						               HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_NORMA_WORKPLACE))
+                                    {
+                                        subItem1.Add()
+                                               .Text("Нормы - сводная ведомость")
+                                               .Url(getReportUrl("Нормы - сводная ведомость"))
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .ImageHtmlAttributes(new { alt = "Нормы" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                    }
+                                    if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+						               HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+						               HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_NORMA_WORKPLACE))
+                                    {
+                                        subItem1.Add()
+                                               .Text("Типовые нормы")
+                                               .Url(getReportUrl("Типовые нормы"))
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .ImageHtmlAttributes(new { alt = "Типовые нормы" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                    }
+						             if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+						               HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+						               HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_NORMA_WORKPLACE))
+                                    {
+                                        subItem1.Add()
+                                               .Text("Типовые нормы по подразделениям")
+                                               .Url(getReportUrl("Типовые нормы по подразделениям"))
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .ImageHtmlAttributes(new { alt = "Типовые нормы" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                    }
+						            if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+						               HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+						               HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_NORMA_WORKPLACE))
+                                    {
+                                        subItem1.Add()
+                                               .Text("Типовые нормы с заменами")
+                                               .Url(getReportUrl("Типовые нормы с заменами"))
+                                               .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                               .ImageHtmlAttributes(new { alt = "Типовые нормы" })
+                                               .LinkHtmlAttributes(new { target = "_blank" });
+                                    }
+
+                        });
+						if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_NORMA_WORKPLACE))
+                        {
+                            subItem.Add()
+
+                                   .Text("Наличие на складах")
+                                   .Url(getReportUrl("Наличие на складах"))
+                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                   .ImageHtmlAttributes(new { alt = "Наличие на складах" })
+								   .LinkHtmlAttributes(new { target = "_blank", title="Наличие на складах" });
+                        }
+						 if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_NORMA_WORKPLACE))
+                        {
+                            subItem.Add()
+                                   .Text("Остатки на складах")
+                                   .Url(getReportUrl("Остатки на складах"))
+                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                   .ImageHtmlAttributes(new { alt = "Остатки" })
+                                   .LinkHtmlAttributes(new { target = "_blank" });
+                        }
+                     subItem.Add()
+                            .Text("Отчеты по персоналу")
+                            .ImageUrl(Url.Content("~/Content/Images/folder.gif"))
+                            .ImageHtmlAttributes(new { alt = "Отчеты по персоналу" })
+                         //.Enabled(false)
+                            .Items(subItem1 =>
+                            {
+
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                      HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                      HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_NORMA_WORKPLACE))
+                                {
+                                    subItem1.Add()
+                                           .Text("Биометрические данные работников")
+                                           .Url(getReportUrl("Биометрические данные"))
+                                           .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                           .ImageHtmlAttributes(new { alt = "Биометрические данные работников" })
+                                           .LinkHtmlAttributes(new { target = "_blank" });
+                                }
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                      HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                      HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_PERSONAL_BY_SHOP))
+                                {
+                                    subItem1.Add()
+                                           .Text("Персонал по штатным позициям")
+                                           .Url(getReportUrl("Распределение персонала по штатным позициям"))
+                                           .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                           .ImageHtmlAttributes(new { alt = "Распределение персонала по штатным позициям" })
+                                           .LinkHtmlAttributes(new { target = "_blank" });
+                                }
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                      HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                      HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_SIZEMISMATCH))
+                                {
+                                    subItem1.Add()
+                                           .Text("Несоответствие размеров")
+                                           .Url(getReportUrl("Несоответствие размеров"))
+                                           .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                           .ImageHtmlAttributes(new { alt = "Несоответствие выданных размеров биометрическим данным работников" })
+                                           .LinkHtmlAttributes(new { target = "_blank" });
+                                }
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                    HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                    HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_NORMA_WORKPLACE))
+                                {
+                                    subItem1.Add()
+                                           .Text("Список профессий в цехе")
+                                           .Url(getReportUrl("Список профессий в цехе"))
+                                           .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                           .ImageHtmlAttributes(new { alt = "Список профессий в цехе" })
+                                           .LinkHtmlAttributes(new { target = "_blank" });
+                                }
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                    HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                    HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_NOTTRANSFER))
+                                {
+                                    subItem1.Add()
+                                           .Text("Сотрудники в ожидании перевода")
+                                           .Url(getReportUrl("Сотрудники в ожидании перевода"))
+                                           .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                           .ImageHtmlAttributes(new { alt = "Сотрудники в ожидании перевода" })
+                                           .LinkHtmlAttributes(new { target = "_blank" });
+                                }
+
+
+                     });
+					 if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+						   HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_NOMENCLATURE))
+                        {
+                            subItem.Add()
+                                   .Text("Номенклатурный справочник")
+                                   .Url(getReportUrl("Номенклатурный справочник"))
+                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                   .ImageHtmlAttributes(new { alt = "Номенклатурный справочник для печати и экспорта в excel" })
+                                   .LinkHtmlAttributes(new { target = "_blank" });
+                        }
+
+					 if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+  					     HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_USER_ACCESS))
+                        {
+                            subItem.Add()
+                                   .Text("Доступ пользователей")
+                                   .Url(getReportUrl("Доступ пользователей"))
+                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                   .ImageHtmlAttributes(new { alt = "Доступ пользователей к системе" })
+                                   .LinkHtmlAttributes(new { target = "_blank" });
+                        }
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                    HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                    HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_DUTY))
+                                {
+                        
+                     subItem.Add()
+                            .Text("Дежурная спецодежда")
+                            .ImageUrl(Url.Content("~/Content/Images/folder.gif"))
+                            .ImageHtmlAttributes(new { alt = "Дежурная спецодежда" })
+                         //.Enabled(false)
+                            .Items(subItem1 =>
+                            {
+                                    subItem1.Add()
+                                           .Text("Карточка МОЛ")
+                                           .Url(getReportUrl("Карточка МОЛ"))
+                                           .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                           .ImageHtmlAttributes(new { alt = "Карточка материально-ответственного лица" })
+                                           .LinkHtmlAttributes(new { target = "_blank" });
+                                        if (HttpContext.Current.Session["_idOrg"].ToString() == DataGlobals.ORG_ID_EVRAZRUDA)
+                                        {
+                                            subItem1.Add()
+                                                   .Text("Учет операций по СИЗ")
+                                                   .Url(getReportUrl("Учет дежурной спецодежды по МОЛ по МВЗ"))
+                                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                                   .ImageHtmlAttributes(new { alt = "Учет операций дежурной спецодежды" })
+                                                   .LinkHtmlAttributes(new { target = "_blank" });
+                                            subItem1.Add()
+                                                   .Text("Движение СИЗ")
+                                                   .Url(getReportUrl("Ведомость движения дежурной спецодежды по МВЗ"))
+                                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                                   .ImageHtmlAttributes(new { alt = "Ведомость движения СИЗ, находящейся в эксплуатации" })
+                                                   .LinkHtmlAttributes(new { target = "_blank" });
+                                            subItem1.Add()
+                                                   .Text("Сводная движения СИЗ")
+                                                   .Url(getReportUrl("Сводная ведомость движения дежурной спецодежды по МВЗ"))
+                                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                                   .ImageHtmlAttributes(new { alt = "Сводная ведомость движения СИЗ, находящейся в эксплуатации" })
+                                                   .LinkHtmlAttributes(new { target = "_blank" });                            
+                                        }
+                                        else {
+                                            subItem1.Add()
+                                                   .Text("Учет операций дежурной спецодежды")
+                                                   .Url(getReportUrl("Учет дежурной спецодежды по МОЛ"))
+                                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                                   .ImageHtmlAttributes(new { alt = "Учет операций дежурной спецодежды" })
+                                                   .LinkHtmlAttributes(new { target = "_blank" });
+                                            subItem1.Add()
+                                                   .Text("Движение дежурной спецодежды")
+                                                   .Url(getReportUrl("Ведомость движения дежурной спецодежды"))
+                                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                                   .ImageHtmlAttributes(new { alt = "Ведомость движения дежурной спецодежды, находящейся в эксплуатации" })
+                                                   .LinkHtmlAttributes(new { target = "_blank" });
+                                            subItem1.Add()
+                                                   .Text("Сводная движения дежурной спецодежды")
+                                                   .Url(getReportUrl("Сводная ведомость движения дежурной спецодежды"))
+                                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                                   .ImageHtmlAttributes(new { alt = "Сводная ведомость движения дежурной спецодежды, находящейся в эксплуатации" })
+                                                   .LinkHtmlAttributes(new { target = "_blank" });                            
+                                        }
+                        });
+                       }
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                    HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                    HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REPORT_NORMA_WORKPLACE))
+                                {
+                                    subItem.Add()
+                                        .Text("Документы на списание в цехе")
+                                         .ImageUrl(Url.Content("~/Content/Images/folder.gif"))
+                                        .ImageHtmlAttributes(new { alt = "Документы на списание" })
+                                        .Items(subItem1 =>
+                                        {
+                                            subItem1.Add()
+                                                       .Text("Приходный ордер на списание")
+                                                       .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                                       .Url(getReportUrl("Приходный ордер М-4 на списание"))
+                                                       .ImageHtmlAttributes(new {alt = "Приходный ордер М-4 на списание"})
+                                                       .LinkHtmlAttributes(new { target = "_blank" });
+                                            if (HttpContext.Current.Session["_idOrg"].ToString() == DataGlobals.ORG_ID_EVRAZRUDA)
+                                            {
+
+                                                subItem1.Add()
+                                                           .Text("Акт МБ-4 на списание Евразруда")
+                                                            .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                                           .Url(getReportUrl("Акт на списание MБ-4 Евразруда") + "&RptUserName=" + Server.UrlEncode(((User)Session[DataGlobals.ACCOUNT_KEY]).UserInfo.FullName))
+                                                           .ImageHtmlAttributes(new { alt = "Акт на списание MБ-4" })
+                                                           .LinkHtmlAttributes(new { target = "_blank" });
+                                            }
+                                            else
+                                            {
+                                                subItem1.Add()
+                                                           .Text("Акт МБ-4 на списание")
+                                                            .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                                           .Url(getReportUrl("Акт на списание MБ-4") + "&RptUserName=" + Server.UrlEncode(((User)Session[DataGlobals.ACCOUNT_KEY]).UserInfo.FullName))
+                                                           .ImageHtmlAttributes(new { alt = "Акт на списание MБ-4" })
+                                                           .LinkHtmlAttributes(new { target = "_blank" });
+                                            }
+                                            subItem1.Add()
+                                                       .Text("Акт МБ-8 на списание")
+                                                        .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                                       .Url(getReportUrl("Акт на списание MБ-8 Цех") + "&RptUserName=" + Server.UrlEncode(((User)Session[DataGlobals.ACCOUNT_KEY]).UserInfo.FullName))
+                                                       .ImageHtmlAttributes(new { alt = "Акт на списание MБ-8 Цех" })
+                                                       .LinkHtmlAttributes(new { target = "_blank" });
+
+                                        });
+                                }
+                                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                                HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                                HttpContext.Current.User.IsInRole(DataGlobals.ROLE_INVENTORY))
+                                {
+
+                                    subItem.Add()
+                                        .Text("Инвентаризация")
+                                        .ImageUrl(Url.Content("~/Content/Images/folder.gif"))
+                                        .ImageHtmlAttributes(new { alt = "Инвентаризация" })
+                                        //.Enabled(false)
+                                        .Items(subItem1 =>
+                                        {
+                                            subItem1.Add()
+                                                       .Text("ИНВ-3 без количества")
+                                                       .ImageUrl(Url.Content("~/Content/Images/bris_toolbar_icl_17.gif"))
+                                                       .Url(getReportUrl("ИНВ-3 без итогов"))
+                                                       .ImageHtmlAttributes(new { alt = "Форма ИНВ-3" })
+                                                       .LinkHtmlAttributes(new { target = "_blank" });
+                                            subItem1.Add()
+                                                       .Text("ИНВ-3")
+                                                       .ImageUrl(Url.Content("~/Content/Images/bris_toolbar_icl_17.gif"))
+                                                       .Url(getReportUrl("ИНВ-3"))
+                                                       .ImageHtmlAttributes(new { alt = "Форма ИНВ-3" })
+                                                       .LinkHtmlAttributes(new { target = "_blank" });
+
+                                        });
+                                }  
+					 if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+  					     HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL))
+                        {
+                            subItem.Add()
+                                   .Text("Список МВЗ")
+                                   .Url(getReportUrl("Список МВЗ"))
+                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                   .ImageHtmlAttributes(new { alt = "Список МВЗ" })
+                                   .LinkHtmlAttributes(new { target = "_blank" });
+                        }
+                                              
+                        
+                    });
+
+
+                item.Add()
+                    .Text("Загрузка из ВС")
+                    .ImageUrl(Url.Content("~/Content/Images/load.gif"))
+                    .ImageHtmlAttributes(new { alt = "Загрузка" })
+                    //.Enabled(false)
+                    .Items(subItem =>
+                    {
+					   if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REMAINS_EXTERNAL_VIEW) ||
+                        HttpContext.Current.User.IsInRole(DataGlobals.ROLE_REMAINS_EXTERNAL_UPLOAD))
+                       {
+						   subItem.Add()
+									  .Text("Загрузка остатков на склад")
+									  .ImageUrl(Url.Content("~/Content/Images/load.gif"))
+									  .Url(Url.Action("Index", "UploadFiles"))
+									  .ImageHtmlAttributes(new { alt = "Загрузка из файла остатков" });
+									  
+						   subItem.Add()
+									  .Text("Загрузка данных из Excel")
+									  .ImageUrl(Url.Content("~/Content/Images/load.gif"))
+									  .Url(Url.Action("Index", "ExternalLoad"))
+									  .ImageHtmlAttributes(new { alt = "Загрузка данных из Excel" });
+						   }
+                    });
+                if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN) ||
+                 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_VIEW_ALL) ||
+                 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_TEST_REGISTER_EDIT) ||
+                 HttpContext.Current.User.IsInRole(DataGlobals.ROLE_TEST_REGISTER_VIEW))
+                {
+                    item.Add()
+                       .Text("Оценка качества СИЗ")
+                       .ImageUrl(Url.Content("~/./Content/Images/check.gif"))
+                       .ImageHtmlAttributes(new { alt = "Оценка качества СИЗ" })
+                    .Items(subItem =>
+                    {
+                        subItem.Add()
+                                   .Text("Оценка качества СИЗ")
+                                   .ImageUrl(Url.Content("~/Content/Images/check.gif"))
+                                   .Url(Url.Action("Index", "TestRegister"))
+                                   .ImageHtmlAttributes(new { alt = "Оценка качества СИЗ" });
+
+                        subItem.Add()
+                                   .Text("Реестр испытаний")
+                                   .ImageUrl(Url.Content("~/Content/Images/report.gif"))
+                                   .Url(getReportUrl("Реестр испытаний"))
+                                   .ImageHtmlAttributes(new { alt = "Реестр учета результатов проведения испытаний" })
+                                   .LinkHtmlAttributes(new { target = "_blank" });
+
+
+                    });
+                }
+                item.Add()
+                    .Text("Помощь")
+                    .ImageUrl(Url.Content("~/Content/Images/help.gif"))
+                    .ImageHtmlAttributes(new { alt = "Помощь" })
+                    //.Enabled(false)
+                    .Items(subItem =>
+                    {
+                        if (HttpContext.Current.Session["_idOrg"].ToString() == DataGlobals.ORG_ID_EVRAZRUDA)
+                        {
+                            subItem.Add()
+                                   .Text("Инструкция пользователя")
+                                   .ImageUrl(Url.Content("~/Content/Images/help.gif"))
+                                   .ImageHtmlAttributes(new { alt = "Инструкция пользователя" })
+                                   .Url("~/Doc/instruction_evrazruda.doc")
+                                   .LinkHtmlAttributes(new { target = "_blank" });
+                            subItem.Add()
+                                   .Text("Регламент взаимодействия АС Учет спецодежды и 1С ИТРП")
+                                   .ImageUrl(Url.Content("~/Content/Images/help.gif"))
+                                   .ImageHtmlAttributes(new { alt = "Регламент взаимодействия АС Учет спецодежды и 1С ИТРП" })
+                                   .Url("~/Doc/reglament_evraruda.docx")
+                                   .LinkHtmlAttributes(new { target = "_blank" });
+                            
+                            subItem.Add()
+                                   .Text("Инструкция работы с интерфейсами 1С ИТРП")
+                                   .ImageUrl(Url.Content("~/Content/Images/help.gif"))
+                                   .ImageHtmlAttributes(new { alt = "Регламент взаимодействия АС Учет спецодежды и 1С ИТРП" })
+                                   .Url("https://sibinfo.evraz.com/it4u/zsmk/messystems/Forms/AllItems.aspx?RootFolder=%2Fit4u%2Fzsmk%2Fmessystems%2FERP%20%28ERP%20%D1%81%D0%B8%D1%81%D1%82%D0%B5%D0%BC%D1%8B%29%2F1C%20ERP%20%28%D1%83%D0%BF%D1%80%D0%B0%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5%20%D1%80%D0%B5%D1%81%D1%83%D1%80%D1%81%D0%B0%D0%BC%D0%B8%20%D0%BF%D1%80%D0%B5%D0%B4%D0%BF%D1%80%D0%B8%D1%8F%D1%82%D0%B8%D1%8F%20%D0%BD%D0%B0%20%D0%B1%D0%B0%D0%B7%D0%B5%20%D1%80%D0%B5%D1%88%D0%B5%D0%BD%D0%B8%D0%B9%201%D0%A1%29%2F1%D0%A1%20%D0%98%D0%A2%D0%A0%D0%9F%20%D0%9F%D0%A0%D0%9E%D0%A4%2F1%D0%A1%20%D0%98%D0%A2%D0%A0%D0%9F%20%D0%9F%D0%A0%D0%9E%D0%A4%20%D1%83%D1%87%D0%B5%D1%82%20%D0%9C%D0%9F%D0%97&FolderCTID=0x01200004AC92D81D723D4A871667B07D1074AC&View=%7BE6546FD4%2D0B1A%2D43F2%2DBE96%2D52A6B12F3C78%7D")
+                                   .LinkHtmlAttributes(new { target = "_blank" });
+                        }
+                        else
+                        {
+                            subItem.Add()
+                                  .Text("Инструкция пользователя")
+                                  .ImageUrl(Url.Content("~/Content/Images/help.gif"))
+                                  .ImageHtmlAttributes(new { alt = "Инструкция пользователя" })
+                                  .Url("~/Doc/instruction.doc")
+                                  .LinkHtmlAttributes(new { target = "_blank" });
+						subItem.Add()
+                               .Text("Инструкция учет дежурной спецодежды")
+                               .ImageUrl(Url.Content("~/Content/Images/help.gif"))
+                               .ImageHtmlAttributes(new { alt = "Инструкция пользователя. Учет дежурной спецодежды. Загрузка в Галактику" })
+                               .Url("~/Doc/addToInstruction.doc")
+                               .LinkHtmlAttributes(new { target = "_blank" });
+                        }
+                        if (HttpContext.Current.User.IsInRole(DataGlobals.ROLE_ADMIN))
+                        {
+                           if (HttpContext.Current.Session["_idOrg"].ToString() == DataGlobals.ORG_ID_EVRAZRUDA)
+                           {
+                               subItem.Add()
+                                      .Text("Проектное решение")
+                                       .ImageUrl(Url.Content("~/Content/Images/help.gif"))
+                                      .ImageHtmlAttributes(new { alt = "Техническое описание системы" })
+                                      .Url("~/Doc/projectSol_evrazruda.docx")
+                                      .LinkHtmlAttributes(new { target = "_blank" });
+                           }
+                           else if (HttpContext.Current.Session["_idOrg"].ToString() == DataGlobals.ORG_ID_VGOK)
+                           {
+                               subItem.Add()
+                                  .Text("Проектное решение")
+                                  .ImageUrl(Url.Content("~/Content/Images/help.gif"))
+                                  .ImageHtmlAttributes(new { alt = "Техническое описание системы" })
+                                  .Url("~/Doc/projectSol.docx")
+                                  .LinkHtmlAttributes(new { target = "_blank" });
+                           }
+
+					   }
+
+                    });                          
+            })
+            .Render(); 
+    %>
+
+        <div id="mainContent">
+
+            <div class="columnsContainer">
+
+                <%--div class="leftColumn">
+                    <p>
+                        <%= Html.Image("~/Content/Images/sharp_arch.jpg") %>
+                    </p>
+                    <h2>Store Pages</h2>
+                    <ul>
+                        <!-- We cannot use Html.ActionLink within a master page to link to a controller while using areas -->
+                        <li><%= Html.ActionLinkForAreas<HomeController>(c => c.Index(), "Home") %></li>
+                    </ul>
+                </div--%>
+                <!--/leftColumn-->
+
+                <div class="rightColumn">
+                    <asp:ContentPlaceHolder ID="MainContentPlaceHolder" runat="server" />
+                </div><!--/rightColumn-->
+
+                <div class="clear">
+                </div>
+
+            </div><!--/columnsContainer-->
+
+            <%--div id="sharpArchLogo"><%= Html.Image("~/Content/Images/sharp_arch_small.gif"))%></div--%>
+
+        </div><!--/mainContent-->
+
+    </div><!--/page-->
+
+    <!-- other content -->
+<% 
+    Html.Telerik().Window()
+        .Name("Window_alert")
+        .Title("Ошибка выполнения")
+        .Draggable(true)
+        .Resizable(resizing => resizing
+            .Enabled(true)
+            .MinHeight(250)
+            .MinWidth(250)
+            )
+        .Scrollable(true)
+        .Modal(true)
+        .Buttons(b => b.Maximize().Close())
+        .Width(800)           
+        .Height(600)
+        .Visible(false)
+        .Render();
+%>
+    
+    <%= Html.Telerik().ScriptRegistrar().jQuery(false).Globalization(true) %>
+<script src="<%: Url.Content("~/Scripts/jquery.alerts.js")%>" type="text/javascript"></script>
+
+<script type="text/javascript">
+
+    function Alert(message) {
+        jAlert(message,'Сообщение...');
+    }
+
+    function alert(message) {
+        Alert(message);
+    }
+
+    function cssConfirm(message, okText, cancelText, callback) {
+        var res = false;
+        jConfirm(message, 'Вопрос...', callback, okText, cancelText);
+        return res;
+    }
+
+</script>
+
+<script type="text/javascript">
+function setCookie(sName, sValue, nDays ) {
+	var expires = "";
+	if ( nDays ) {
+		var d = new Date();
+		d.setTime( d.getTime() + nDays * 24 * 60 * 60 * 1000 );
+		expires = "; expires=" + d.toGMTString();
+	}
+
+	document.cookie = sName + "=" + sValue + expires + "; path=/";
+};
+
+function getCookie(sName) {
+	var re = new RegExp( "(\;|^)[^;]*(" + sName + ")\=([^;]*)(;|$)" );
+	var res = re.exec( document.cookie );
+	return res != null ? res[3] : null;
+};
+
+    function onGridErrorEvent(e) {
+        var xhr = e.XMLHttpRequest;
+        if (! xhr) xhr=e;
+        if ((e.textStatus == 'error') || (e.statusText == 'error') || (e.statusText.indexOf('Error') > 0)) {
+            var window = $('#Window_alert').data('tWindow');
+            window.content(xhr.responseText).center().open();
+            try {
+                e.preventDefault();
+            } catch(e) { } 
+        }
+    }
+
+    var _currentSelectEnterprise = "";
+<% 
+    if (ViewData[Store.Data.DataGlobals.REFERENCE_ENTERPRICE]!=null) {
+%>
+    _currentSelectEnterprise = "<%: ViewData[Store.Data.DataGlobals.REFERENCE_ENTERPRICE]%>";
+<%
+    }
+%>
+
+    function onEnterpriceListBox(e) {
+        var dropDownList = $("#_EnterpriceList").data("tDropDownList");
+        var curRef = document.location.href;
+        if (curRef.indexOf("_idOrg")==-1){
+            indexParam = curRef.indexOf("?");
+            if (indexParam == -1){
+                document.location.href=curRef+"?_idOrg="+dropDownList.value();
+            } else {
+                document.location.href=curRef+"&_idOrg="+dropDownList.value();
+            }
+        } else {
+            indexParam = curRef.indexOf("_idOrg");
+            var newRef = curRef.substring(0,indexParam);
+            tmpIndx=curRef.indexOf(indexParam,"&");
+            newRefEnd="";
+            if (tmpIndx!=-1){
+                newRefEnd =selGrp.substring(tmpIndx);
+            }
+            if (newRef.substring(newRef.length-1)=="?"){
+                newRefEnd=newRefEnd.substring(1);
+            }
+            newRef = newRef+newRefEnd;
+            if (newRef.substring(newRef.length-1) != "?"){
+                newRef = newRef+"&";
+            }
+            document.location.href=newRef+"_idOrg="+dropDownList.value();
+        }
+    }
+</script>
+</body>
+</html>
